@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from router import tests_router
+from routes.for_admin import admin_router
+from routes.login import login_router
+from routes.test import tests_router
+from routes.user import users_router
+
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     contact={
@@ -19,4 +24,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"], )
 
+app.include_router(login_router)
+app.include_router(users_router)
 app.include_router(tests_router)
+app.include_router(admin_router)

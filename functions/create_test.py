@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import HTTPException
 
 from functions.db_operations import save_in_db, get_in_db
@@ -6,8 +8,10 @@ from models.question import Questions
 from models.science import Sciences
 
 
-async def create_result_f(db, science_id, file):
-    await get_in_db(db, Sciences, science_id)
+async def create_result_f(db, science_id, file, user):
+    sc = await get_in_db(db, Sciences, science_id)
+    if sc.user_id != user.id:
+        raise HTTPException(400, "Siz boshqa fan id sini kirityabsiz")
     content = await file.read()
     content_str = content.decode("utf-8-sig")
 
@@ -36,13 +40,15 @@ async def create_result_f(db, science_id, file):
             raise HTTPException(status_code=400, detail=f"No correct option found for question: "
                                                         f"{question_text}")
 
-        db_question = Questions(text=question_text, science_id=science_id)
+        db_question = Questions(text=question_text, created_at=datetime.today(),
+                                science_id=science_id, user_id=user.id)
         save_in_db(db, db_question)
 
         db_options = []
         for idx, option_text in enumerate(options):
             is_correct = (idx == correct_option_index)
-            db_option = Answers(text=option_text, status=is_correct, question_id=db_question.id)
+            db_option = Answers(text=option_text, status=is_correct,
+                                question_id=db_question.id)
             save_in_db(db, db_option)
             db_options.append(db_option)
 
